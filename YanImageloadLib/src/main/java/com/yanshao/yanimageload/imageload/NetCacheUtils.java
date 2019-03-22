@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.ImageView;
 
 import com.yanshao.yanimageload.util.CircleImageDrawable;
+import com.yanshao.yanimageload.util.FileUtils;
 import com.yanshao.yanimageload.util.RoundImageDrawable;
 
 import java.io.IOException;
@@ -98,17 +99,18 @@ public class NetCacheUtils {
         protected void onPostExecute(Bitmap result) {
             if (result != null) {
                // ivPic.setImageDrawable(BitmapUtil.RoundImage(result, mcontext));
+                Bitmap bitmap=FileUtils.compress(result,ivPic);
                 if (tag == 1) {
-                    ivPic.setImageDrawable(new RoundImageDrawable(result));
+                    ivPic.setImageDrawable(new RoundImageDrawable(bitmap));
                 } else if (tag == 2) {
-                    ivPic.setImageDrawable(new CircleImageDrawable(result));
+                    ivPic.setImageDrawable(new CircleImageDrawable(bitmap));
                 } else{
-                    ivPic.setImageBitmap(result);
+                    ivPic.setImageBitmap(bitmap);
                 }
                 //从网络获取图片后,保存至本地缓存
-                mLocalCacheUtils.setBitmapToLocal(url, result);
+                mLocalCacheUtils.setBitmapToLocal(url, bitmap);
                 //保存至内存中
-                mMemoryCacheUtils.setBitmapToMemory(url, result);
+                mMemoryCacheUtils.setBitmapToMemory(url, bitmap);
 
             }
         }

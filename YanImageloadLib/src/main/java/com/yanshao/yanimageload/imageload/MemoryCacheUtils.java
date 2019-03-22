@@ -22,14 +22,7 @@ public class MemoryCacheUtils {
      * @param url
      */
     public Bitmap getBitmapFromMemory(String url) {
-        //Bitmap bitmap = mMemoryCache.get(url);//1.强引用方法
-          /*2.弱引用方法
-          SoftReference<Bitmap> bitmapSoftReference = mMemoryCache.get(url);
-          if (bitmapSoftReference != null) {
-              Bitmap bitmap = bitmapSoftReference.get();
-              return bitmap;
-          }
-          */
+
         if(url==null||"".equals(url)){
             return null;
         }

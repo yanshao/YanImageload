@@ -1,5 +1,6 @@
 package com.yanshao.yanimageload.imageload;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
@@ -11,7 +12,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
 public class LocalCacheUtils {
-    private static final String CACHE_PATH= Environment.getExternalStorageDirectory().getAbsolutePath()+"/yan";
+
+Context mContext;
+    public LocalCacheUtils(Context context) {
+        mContext=context;
+    }
+
     /**
      * 从本地读取图片
      * @param url
@@ -20,7 +26,7 @@ public class LocalCacheUtils {
         String fileName = null;//把图片的url当做文件名,并进行MD5加密
         try {
             fileName =  MD5Encoder.encode(url);    //这里加不加密无所谓
-            File file=new File(CACHE_PATH,fileName);
+            File file=new File(mContext.getCacheDir(),fileName);
             Bitmap bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
             return bitmap;
         } catch (Exception e) {
@@ -38,7 +44,7 @@ public class LocalCacheUtils {
         try {
 
             String fileName =  MD5Encoder.encode(url);//把图片的url当做文件名,并进行MD5加密
-            File file=new File(CACHE_PATH,fileName);
+            File file=new File(mContext.getCacheDir(),fileName);
 
             //通过得到文件的父文件,判断父文件是否存在
             File parentFile = file.getParentFile();
