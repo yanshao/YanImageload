@@ -23,7 +23,7 @@
  
  在需要的地方直接调用下面代码
 
-		YanImageLoad.getInstance().disPlay(imageview, "http://xxxx", 2);
+		YanImageLoad.getInstance(MainActivity.this).disPlay(imageview, "http://xxxx", 2);
 
 
 第一个参数  imagview  为imagview控件   第二个参数 图片url  第三个参数  1 圆角 2 圆形  其他值为正常显示
