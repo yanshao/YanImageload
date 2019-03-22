@@ -27,6 +27,9 @@ Context mContext;
         try {
             fileName =  MD5Encoder.encode(url);    //这里加不加密无所谓
             File file=new File(mContext.getCacheDir(),fileName);
+            if (!file.exists()){
+                return null;
+            }
             Bitmap bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
             return bitmap;
         } catch (Exception e) {
