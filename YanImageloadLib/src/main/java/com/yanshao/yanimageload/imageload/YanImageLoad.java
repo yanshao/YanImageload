@@ -14,6 +14,7 @@ import com.yanshao.yanimageload.bean.CancelableRequestDelegate;
 import com.yanshao.yanimageload.bean.ImageBean;
 
 import com.yanshao.yanimageload.util.LIFOLinkedBlockingDeque;
+import com.yanshao.yanimageload.util.LogUtils;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -59,28 +60,28 @@ public class YanImageLoad {
 
             switch (msg.what) {
                 case MSG_CACHE_UN_HINT:
-                    Log.e("yy","=内存加载失败=");
+                    LogUtils.e("yy","=内存加载失败=");
                     mLocalQueue.add(imageBean);
 
                     break;
                 case MSG_LOCAL_GET_ERROR:
-                    Log.e("yy","=本地加载失败=");
+                    LogUtils.e("yy","=本地加载失败=");
                     mNetworkQueue.add(imageBean);
                     break;
                 case MSG_HTTP_GET_ERROR:
-                    Log.e("yy","=网络或者文件加载失败=");
+                    LogUtils.e("yy","=网络或者文件加载失败=");
                     imageBean.setErrorImageRes();
                     break;
                 case MSG_CACHE_HINT:
-                    Log.e("yy","=内存加载成功=");
+                    LogUtils.e("yy","=内存加载成功=");
                     imageBean.setResBitmap();
                     break;
                 case MSG_LOCAL_GET_SUCCESS:
-                    Log.e("yy","=本地加载成功=");
+                    LogUtils.e("yy","=本地加载成功=");
                     imageBean.setResBitmap();
                     break;
                 case MSG_HTTP_GET_SUCCESS:
-                    Log.e("yy","=网络或者文件加载成功=");
+                    LogUtils.e("yy","=网络或者文件加载成功=");
                     imageBean.setResBitmap();
                     break;
             }

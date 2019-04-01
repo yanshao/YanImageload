@@ -4,22 +4,20 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Matrix;
+
 import android.graphics.RectF;
 import android.os.Build;
 import android.util.Log;
 import android.widget.ImageView;
 
-import java.io.BufferedInputStream;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+
 /**
  * 文件管理类
  * @author WANGYAN
@@ -39,7 +37,7 @@ public class FileUtils {
         // 使用获得到的InSampleSize再次解析图片
         options.inJustDecodeBounds = false;
         Bitmap bitmap = BitmapFactory.decodeFile(path, options);
-        Log.e("yy", "size==" + bitmap.getByteCount() + "width=" + bitmap.getWidth() + "height=" + bitmap.getHeight());
+        LogUtils.e("yy", "size==" + bitmap.getByteCount() + "width=" + bitmap.getWidth() + "height=" + bitmap.getHeight());
         //  imageView.setImageBitmap(bitmap);
         return bitmap;
 
@@ -49,13 +47,13 @@ public class FileUtils {
 
     public static Bitmap compress(Bitmap b, ImageView imageView) {
         Bitmap bitmap = b;
-        Log.e("yy", "压缩前图片的大小" + getBitmapSize(b)+ "M宽度为" + bitmap.getWidth() + "高度为" + bitmap.getHeight());
+        LogUtils.e("yy", "压缩前图片的大小" + getBitmapSize(b)+ "M宽度为" + bitmap.getWidth() + "高度为" + bitmap.getHeight());
 
        if (bitmap.getByteCount() > 4096000) {
 
            bitmap = suofang(bitmap,caculateInSampleSize(bitmap,Utils.getImageViewSize(imageView).width,Utils.getImageViewSize(imageView).height));
         }
-         Log.e("yy", "压缩后图片的大小" + getBitmapSize(bitmap) + "M宽度为" + bitmap.getWidth() + "高度为" + bitmap.getHeight());
+        LogUtils.e("yy", "压缩后图片的大小" + getBitmapSize(bitmap) + "M宽度为" + bitmap.getWidth() + "高度为" + bitmap.getHeight());
 
         return bitmap;
     }
@@ -115,7 +113,7 @@ public static void saveBitmap(Bitmap bitmap, String picName) {
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
         out.flush();
         out.close();
-        Log.i("222", "已经保存");
+        LogUtils.i("222", "已经保存");
     } catch (FileNotFoundException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
