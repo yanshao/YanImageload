@@ -1,0 +1,48 @@
+{
+    "logs": [
+        {
+            "outputFile": "D:\\MyWorkSpace\\YanImageload\\YanImageloadLib\\build\\intermediates\\incremental\\mergeReleaseResources\\merged.dir\\values\\values.xml",
+            "map": [
+                {
+                    "source": "D:\\MyWorkSpace\\YanImageload\\YanImageloadLib\\src\\main\\res\\values\\strings.xml",
+                    "from": {
+                        "startLines": "1",
+                        "startColumns": "4",
+                        "startOffsets": "17",
+                        "endColumns": "49",
+                        "endOffsets": "62"
+                    },
+                    "to": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "49",
+                        "endOffsets": "100"
+                    }
+                }
+            ]
+        },
+        {
+            "outputFile": "D:\\MyWorkSpace\\YanImageload\\YanImageloadLib\\build\\intermediates\\res\\merged\\release\\values\\values.xml",
+            "map": [
+                {
+                    "source": "D:\\MyWorkSpace\\YanImageload\\YanImageloadLib\\src\\main\\res\\values\\strings.xml",
+                    "from": {
+                        "startLines": "1",
+                        "startColumns": "4",
+                        "startOffsets": "17",
+                        "endColumns": "49",
+                        "endOffsets": "62"
+                    },
+                    "to": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "49",
+                        "endOffsets": "100"
+                    }
+                }
+            ]
+        }
+    ]
+}

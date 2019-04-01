@@ -1,248 +1,191 @@
 package com.yanshao.yanimageload.imageload;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.os.Build;
+
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
-import android.view.View;
+import android.util.LruCache;
+
 import android.widget.ImageView;
-import com.yanshao.yanimageload.util.CircleImageDrawable;
-import com.yanshao.yanimageload.util.FileUtils;
-import com.yanshao.yanimageload.util.RoundImageDrawable;
-import com.yanshao.yanimageload.util.Scheme;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import com.yanshao.yanimageload.bean.CancelableRequestDelegate;
+import com.yanshao.yanimageload.bean.ImageBean;
 
+import com.yanshao.yanimageload.util.LIFOLinkedBlockingDeque;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+
+/**
+ * 加载图片  目前仅支持 加载sd卡图片  和网络图片
+ * @author WANGYAN
+ * 微博：@Wang丶Yan
+ * Github:https://github.com/yanshao
+ * 创建时间：2019-03-21
+ */
 public class YanImageLoad {
     private static Context mContext;
     private NetCacheUtils mNetCacheUtils;
     private LocalCacheUtils mLocalCacheUtils;
     private MemoryCacheUtils mMemoryCacheUtils;
     private static YanImageLoad instance;
+    ExecutorService priorityThreadPool = Executors.newFixedThreadPool(1);
+    private CancelableRequestDelegate mCancelableRequestDelegate = new CancelableRequestDelegate();
+    BlockingQueue<ImageBean> mCacheQueue;
+    BlockingQueue<ImageBean> mLocalQueue;
+    BlockingQueue<ImageBean> mNetworkQueue;
+    public static final int MSG_CACHE_HINT = 0x110;//内存 成功 code
+    public static final int MSG_CACHE_UN_HINT = MSG_CACHE_HINT + 1;//内存 失败 code
+    public static final int MSG_HTTP_GET_ERROR = MSG_CACHE_UN_HINT + 1;//网络 成功 code
+    public static final int MSG_HTTP_GET_SUCCESS = MSG_HTTP_GET_ERROR + 1;//网络 失败 code
+    public static final int MSG_LOCAL_GET_SUCCESS = MSG_HTTP_GET_SUCCESS + 1;//本地（磁盘）成功 code
+    public static final int MSG_LOCAL_GET_ERROR = MSG_LOCAL_GET_SUCCESS + 1;//本地（磁盘）失败 code
+    public   static LruCache<String, Bitmap> mMemoryCache;
+
+    public CancelableRequestDelegate getCancelableRequestDelegate() {
+        return mCancelableRequestDelegate;
+    }
+
+    Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+
+
+            ImageBean imageBean = (ImageBean) msg.obj;
+
+            switch (msg.what) {
+                case MSG_CACHE_UN_HINT:
+                    Log.e("yy","=内存加载失败=");
+                    mLocalQueue.add(imageBean);
+
+                    break;
+                case MSG_LOCAL_GET_ERROR:
+                    Log.e("yy","=本地加载失败=");
+                    mNetworkQueue.add(imageBean);
+                    break;
+                case MSG_HTTP_GET_ERROR:
+                    Log.e("yy","=网络或者文件加载失败=");
+                    imageBean.setErrorImageRes();
+                    break;
+                case MSG_CACHE_HINT:
+                    Log.e("yy","=内存加载成功=");
+                    imageBean.setResBitmap();
+                    break;
+                case MSG_LOCAL_GET_SUCCESS:
+                    Log.e("yy","=本地加载成功=");
+                    imageBean.setResBitmap();
+                    break;
+                case MSG_HTTP_GET_SUCCESS:
+                    Log.e("yy","=网络或者文件加载成功=");
+                    imageBean.setResBitmap();
+                    break;
+            }
+            //imageBean.getImageView().setImageBitmap(imageBean.getBitmap());
+        }
+    };
 
     private YanImageLoad(Context context) {
-        mContext=context;
-        mMemoryCacheUtils = new MemoryCacheUtils();
-        mLocalCacheUtils = new LocalCacheUtils(mContext);
-        mNetCacheUtils = new NetCacheUtils(mLocalCacheUtils, mMemoryCacheUtils);
+        long maxMemory = Runtime.getRuntime().maxMemory() / 8;//得到手机最大允许内存的1/8,即超过指定内存,则开始回收
+        //需要传入允许的内存最大值,虚拟机默认内存16M,真机不一定相同
+        mMemoryCache = new LruCache<String, Bitmap>((int) maxMemory) {
+            //用于计算每个条目的大小
+            @Override
+            protected int sizeOf(String key, Bitmap value) {
+                int byteCount = value.getByteCount();
+                return byteCount;
+            }
+        };
+        //内存加载
+        mCacheQueue = new LIFOLinkedBlockingDeque<ImageBean>();
+        mMemoryCacheUtils = new MemoryCacheUtils(context, mMemoryCache, mCacheQueue, handler);
+        //本地缓存加载
+        mLocalQueue = new LIFOLinkedBlockingDeque<ImageBean>();
+        mLocalCacheUtils = new LocalCacheUtils(context, mLocalQueue, handler);
+        //网络加载
+        mNetworkQueue = new LinkedBlockingQueue<ImageBean>();
+        mNetCacheUtils = new NetCacheUtils(context, mLocalCacheUtils, mMemoryCacheUtils, mNetworkQueue, handler);
+
+        mMemoryCacheUtils.start();
+        mLocalCacheUtils.start();
+        mNetCacheUtils.start();
 
     }
 
+    public static class Builder {
+        private Context context;
+
+        public Builder(Context context) {
+            if (context == null) {
+                throw new IllegalArgumentException("Context must not be null.");
+            }
+            this.context = context.getApplicationContext();
+        }
+
+        public YanImageLoad build() {
+            Context context = this.context;
+
+
+            return new YanImageLoad(context);
+        }
+    }
     public static YanImageLoad getInstance(Context context) {
 
-        if (instance == null)
-        {
-            synchronized (YanImageLoad.class)
-            {
-                if (instance == null)
-                {
-                    instance = new YanImageLoad(context);
+        if (instance == null) {
+            synchronized (YanImageLoad.class) {
+                if (instance == null) {
+                    instance = new Builder(context).build();
                 }
             }
         }
         return instance;
     }
 
-    public Bitmap getBitmap(String url) {
-        Bitmap bitmap = null;
-        bitmap = mMemoryCacheUtils.getBitmapFromMemory(url);
-        if (bitmap != null) {
-            return bitmap;
-        }
-        bitmap = mLocalCacheUtils.getBitmapFromLocal(url);
-        if (bitmap != null) {
-            mMemoryCacheUtils.setBitmapToMemory(url, bitmap);
-            return bitmap;
-        }
+    /**
+     * @param ivPic imageview
+     * @param url   图片url
+     * @param tag   1 圆角矩形 2 圆形  other  正常
+     */
+    public void disPlay(final ImageView ivPic, final String url, final int tag) {
 
-        return bitmap;
+        ImageBean imageBean = new ImageBean(this, url, ivPic, 0, tag);
+        mCancelableRequestDelegate.putRequest(ivPic.hashCode(), imageBean.getCacheKey());
+
+        priorityThreadPool.execute(new buildTask(imageBean));
     }
 
+
+
+
+    private class buildTask implements Runnable {
+
+        ImageBean imageBean;
+
+        public buildTask(ImageBean imageBean) {
+            this.imageBean = imageBean;
+
+        }
+
+        @Override
+        public void run() {
+            mCacheQueue.offer(imageBean);
+        }
+    }
+
+
     /**
+     * 往内存中写图片
      *
-     * @param ivPic  imageview
-     * @param url  图片url
-     * @param tag  1 圆角矩形 2 圆形  other  正常
-     */
-    public void disPlay(final ImageView ivPic, String url, int tag) {
-       //
-        switch (Scheme.ofUri(url))
-        {
-            case HTTP:
-                netBitmap(ivPic, url, tag);
-
-                break;
-            case PATH:
-                SDBitmap(ivPic, url, tag);
-
-                break;
-            case FILE:
-                Log.e("yy","eeeeeeeeee");
-
-                break;
-            case CONTENT:
-                break;
-            case ASSETS:
-                break;
-            case DRAWABLE:
-                break;
-            case UNKNOWN:
-            default:
-
-        }
-
-    }
-
-    /**
-     * 网络图片 加载
-     * @param ivPic
      * @param url
-     * @param tag
+     * @param bitmap
      */
-    private  void netBitmap(ImageView ivPic,String url,int tag){
-        Bitmap bitmap;
-        //内存缓存
-        bitmap = mMemoryCacheUtils.getBitmapFromMemory(url);
-        if (bitmap != null) {
+    public static void setBitmapToMemory(String url, Bitmap bitmap) {
 
-            if (tag == 1) {
-                ivPic.setImageDrawable(new RoundImageDrawable(bitmap));
-            } else if (tag == 2) {
-                ivPic.setImageDrawable(new CircleImageDrawable(bitmap));
-            } else {
-                ivPic.setImageBitmap(bitmap);
-            }
-
-            Log.e("yyyy","============内存===");
-            return ;
-        }
-
-        //本地缓存
-        bitmap = mLocalCacheUtils.getBitmapFromLocal(url);
-        if (bitmap != null) {
-            if (tag == 1) {
-                ivPic.setImageDrawable(new RoundImageDrawable(bitmap));
-            } else if (tag == 2) {
-                ivPic.setImageDrawable(new CircleImageDrawable(bitmap));
-            } else {
-                ivPic.setImageBitmap(bitmap);
-            }
-            //从本地获取图片后,保存至内存中
-            mMemoryCacheUtils.setBitmapToMemory(url, bitmap);
-            Log.e("yyyy","============本地===");
-            return;
-        }
-        //网络缓存
-        mNetCacheUtils.getBitmapFromNet(ivPic, url, tag );
+        mMemoryCache.put(url, bitmap);
     }
-
-    /**
-     *  本地
-     * @param
-     */
-   private void SDBitmap(ImageView ivPic,String url,int tag){
-       Bitmap bitmap;
-       //内存缓存
-       bitmap = mMemoryCacheUtils.getBitmapFromMemory(url);
-       if (bitmap != null) {
-
-           if (tag == 1) {
-               ivPic.setImageDrawable(new RoundImageDrawable(bitmap));
-           } else if (tag == 2) {
-               ivPic.setImageDrawable(new CircleImageDrawable(bitmap));
-           } else {
-               ivPic.setImageBitmap(bitmap);
-           }
-
-           Log.e("yyyy","=======本地图片=====内存缓存===");
-           return ;
-       }
-
-       //本地缓存
-       bitmap = mLocalCacheUtils.getBitmapFromLocal(url);
-       if (bitmap != null) {
-           if (tag == 1) {
-               ivPic.setImageDrawable(new RoundImageDrawable(bitmap));
-           } else if (tag == 2) {
-               ivPic.setImageDrawable(new CircleImageDrawable(bitmap));
-           } else {
-               ivPic.setImageBitmap(bitmap);
-           }
-           //从本地获取图片后,保存至内存中
-           mMemoryCacheUtils.setBitmapToMemory(url, bitmap);
-           Log.e("yyyy","=====本地图片=======本地缓存===");
-           return;
-       }
-       File file=new File(url);
-       try {
-           bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
-
-           if (bitmap != null) {
-               bitmap=FileUtils.compress(bitmap,ivPic);
-               if (tag == 1) {
-                   ivPic.setImageDrawable(new RoundImageDrawable(bitmap));
-               } else if (tag == 2) {
-                   ivPic.setImageDrawable(new CircleImageDrawable(bitmap));
-               } else {
-                   ivPic.setImageBitmap(bitmap);
-               }
-               //从本地获取图片后,保存至内存中
-               mMemoryCacheUtils.setBitmapToMemory(url, bitmap);
-               mLocalCacheUtils.setBitmapToLocal(url, bitmap);
-               Log.e("yyyy","=====本地图片=======sd卡===");
-               return;
-           }
-       } catch (FileNotFoundException e) {
-           e.printStackTrace();
-       }
-
-   }
-
-    @SuppressLint("NewApi")
-    public void disPlay(View ivPic, String url) {
-        Bitmap bitmap;
-        //内存缓存
-        bitmap = mMemoryCacheUtils.getBitmapFromMemory(url);
-        if (bitmap != null) {
-            //ivPic.setImageBitmap(bitmap);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                //Android系统大于等于API16，使用setBackground
-                ivPic.setBackground(new BitmapDrawable(bitmap));
-            } else {
-                //Android系统小于API16，使用setBackground
-                ivPic.setBackgroundDrawable(new BitmapDrawable(bitmap));
-
-            }
-
-            return;
-        }
-
-        //本地缓存
-        bitmap = mLocalCacheUtils.getBitmapFromLocal(url);
-        if (bitmap != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                //Android系统大于等于API16，使用setBackground
-                ivPic.setBackground(new BitmapDrawable(bitmap));
-            } else {
-                //Android系统小于API16，使用setBackground
-                ivPic.setBackgroundDrawable(new BitmapDrawable(bitmap));
-            }
-            //从本地获取图片后,保存至内存中
-            mMemoryCacheUtils.setBitmapToMemory(url, bitmap);
-            return;
-        }
-        //网络缓存
-        mNetCacheUtils.getBitmapFromNet(ivPic, url );
-    }
-
 
 }
 

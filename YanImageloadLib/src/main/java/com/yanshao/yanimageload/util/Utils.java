@@ -1,11 +1,18 @@
 package com.yanshao.yanimageload.util;
 
 import android.util.DisplayMetrics;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import java.lang.reflect.Field;
-
+/**
+ * 工具类
+ * @author WANGYAN
+ * 微博：@Wang丶Yan
+ * Github:https://github.com/yanshao
+ * 创建时间：2019-03-01
+ */
 public class Utils {
     /**
      * 根据ImageView获适当的压缩的宽和高
@@ -13,7 +20,7 @@ public class Utils {
      * @param imageView
      * @return
      */
-    public static ImageSize getImageViewSize(ImageView imageView)
+    public static ImageSize getImageViewSize(View imageView)
     {
 
         ImageSize imageSize = new ImageSize();
@@ -60,8 +67,26 @@ public class Utils {
 
     public static class ImageSize
     {
-        int width;
-        int height;
+       public int width;
+        public    int height;
+        public ImageSize()
+        {
+        }
+
+        public ImageSize(int width, int height)
+        {
+            this.width = width;
+            this.height = height;
+        }
+
+        @Override
+        public String toString()
+        {
+            return "ImageSize{" +
+                    "width=" + width +
+                    ", height=" + height +
+                    '}';
+        }
     }
 
     /**

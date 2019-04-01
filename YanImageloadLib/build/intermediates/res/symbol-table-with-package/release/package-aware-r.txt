@@ -1,0 +1,2 @@
+com.yanshao.yanimageload
+string app_name

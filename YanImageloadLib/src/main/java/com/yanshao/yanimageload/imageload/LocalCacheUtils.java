@@ -4,18 +4,48 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
+import android.os.Handler;
 
+import com.yanshao.yanimageload.bean.ImageBean;
+import com.yanshao.yanimageload.util.Dispatcher;
+import com.yanshao.yanimageload.util.FileUtils;
 import com.yanshao.yanimageload.util.MD5Encoder;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-
-public class LocalCacheUtils {
+import java.util.concurrent.BlockingQueue;
+/**
+ * 本地缓存线程
+ * @author WANGYAN
+ * 微博：@Wang丶Yan
+ * Github:https://github.com/yanshao
+ * 创建时间：2019-03-22
+ */
+public class LocalCacheUtils extends Dispatcher {
 
 Context mContext;
-    public LocalCacheUtils(Context context) {
+    public LocalCacheUtils(Context context, BlockingQueue<ImageBean> mqueue, Handler handler) {
+        super(context, mqueue, handler,
+                YanImageLoad.MSG_LOCAL_GET_SUCCESS,
+                YanImageLoad.MSG_LOCAL_GET_ERROR);
         mContext=context;
+    }
+
+
+
+
+    @Override
+    protected void dealRequest(ImageBean request) {
+      Bitmap bitmap=  getBitmapFromLocal(request.getUrl());
+      if (bitmap==null){
+          sendErrorMsg(request);
+      }else{
+          bitmap = FileUtils.compress(bitmap, request.getImageview());
+          request.setBitmap(bitmap);
+          YanImageLoad.setBitmapToMemory(request.getUrl(), bitmap);
+          sendSuccessMsg(request);
+      }
     }
 
     /**
@@ -37,30 +67,4 @@ Context mContext;
         }
         return null;
     }
-
-    /**
-     * 从网络获取图片后,保存至本地缓存
-     * @param url
-     * @param bitmap
-     */
-    public void setBitmapToLocal(String url,Bitmap bitmap){
-        try {
-
-            String fileName =  MD5Encoder.encode(url);//把图片的url当做文件名,并进行MD5加密
-            File file=new File(mContext.getCacheDir(),fileName);
-
-            //通过得到文件的父文件,判断父文件是否存在
-            File parentFile = file.getParentFile();
-            if (!parentFile.exists()){
-                parentFile.mkdirs();
-            }
-            //把图片保存至本地
-            bitmap.compress(Bitmap.CompressFormat.JPEG,100,new FileOutputStream(file));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
-
 }

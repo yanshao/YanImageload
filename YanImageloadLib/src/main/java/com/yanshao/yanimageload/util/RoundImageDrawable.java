@@ -11,7 +11,11 @@ import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 
 /**
- * 圆角
+ * 图片圆角
+ * @author WANGYAN
+ * 微博：@Wang丶Yan
+ * Github:https://github.com/yanshao
+ * 创建时间：2019-03-01
  */
 public class RoundImageDrawable extends Drawable
 {

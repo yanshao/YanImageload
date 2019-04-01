@@ -50,7 +50,6 @@ public enum Scheme {
 
             str = PATH;
         }
-        Log.e("yy","str=="+str);
         return str;
     }
 

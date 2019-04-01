@@ -1,47 +1,55 @@
 package com.yanshao.yanimageload.imageload;
 
+import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.Handler;
 import android.util.LruCache;
 
-public class MemoryCacheUtils {
-    private LruCache<String,Bitmap> mMemoryCache;
-    public MemoryCacheUtils(){
-        long maxMemory = Runtime.getRuntime().maxMemory()/8;//得到手机最大允许内存的1/8,即超过指定内存,则开始回收
-        //需要传入允许的内存最大值,虚拟机默认内存16M,真机不一定相同
-        mMemoryCache=new LruCache<String,Bitmap>((int) maxMemory){
-            //用于计算每个条目的大小
-            @Override
-            protected int sizeOf(String key, Bitmap value) {
-                int byteCount = value.getByteCount();
-                return byteCount;
-            }
-        };
+import com.yanshao.yanimageload.bean.ImageBean;
+import com.yanshao.yanimageload.util.Dispatcher;
+import com.yanshao.yanimageload.util.FileUtils;
+
+import java.util.concurrent.BlockingQueue;
+/**
+ * 内存缓存
+ * @author WANGYAN
+ * 微博：@Wang丶Yan
+ * Github:https://github.com/yanshao
+ * 创建时间：2019-03-22
+ */
+public class MemoryCacheUtils extends Dispatcher {
+    private LruCache<String, Bitmap> mMemoryCache;
+
+    public MemoryCacheUtils(Context context, LruCache<String, Bitmap> mMemoryCache, BlockingQueue<ImageBean> cacheQueue, Handler uiHandler) {
+        super(context, cacheQueue, uiHandler, YanImageLoad.MSG_CACHE_HINT, YanImageLoad.MSG_CACHE_UN_HINT);
+        this.mMemoryCache = mMemoryCache;
     }
+
     /**
      * 从内存中读图片
+     *
      * @param url
      */
     public Bitmap getBitmapFromMemory(String url) {
 
-        if(url==null||"".equals(url)){
+        if (url == null || "".equals(url)) {
             return null;
         }
         Bitmap bitmap = mMemoryCache.get(url);
         return bitmap;
 
     }
-    /**
-     * 往内存中写图片
-     * @param url
-     * @param bitmap
-     */
-    public void setBitmapToMemory(String url, Bitmap bitmap) {
-        //mMemoryCache.put(url, bitmap);//1.强引用方法
-          /*2.弱引用方法
-          mMemoryCache.put(url, new SoftReference<>(bitmap));
-          */
-        mMemoryCache.put(url,bitmap);
+
+
+    @Override
+    protected void dealRequest(ImageBean request) {
+        Bitmap bitmap = getBitmapFromMemory(request.getUrl());
+        if (bitmap == null) {
+            sendErrorMsg(request);
+        } else {
+            bitmap = FileUtils.compress(bitmap, request.getImageview());
+            request.setBitmap(bitmap);
+            sendSuccessMsg(request);
+        }
     }
-
-
 }

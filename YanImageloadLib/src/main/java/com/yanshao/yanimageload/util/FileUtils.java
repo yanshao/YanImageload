@@ -1,5 +1,6 @@
 package com.yanshao.yanimageload.util;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -19,7 +20,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
+/**
+ * 文件管理类
+ * @author WANGYAN
+ * 微博：@Wang丶Yan
+ * Github:https://github.com/yanshao
+ * 创建时间：2019-03-20
+ */
 public class FileUtils {
 
     public static Bitmap ys(String path, ImageView imageView) {
@@ -43,21 +50,11 @@ public class FileUtils {
     public static Bitmap compress(Bitmap b, ImageView imageView) {
         Bitmap bitmap = b;
         Log.e("yy", "压缩前图片的大小" + getBitmapSize(b)+ "M宽度为" + bitmap.getWidth() + "高度为" + bitmap.getHeight());
-       // saveBitmap(b,"qian.jpg");
+
        if (bitmap.getByteCount() > 4096000) {
 
            bitmap = suofang(bitmap,caculateInSampleSize(bitmap,Utils.getImageViewSize(imageView).width,Utils.getImageViewSize(imageView).height));
         }
-
-      /*  if (bm.getByteCount() > 512000) {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inSampleSize = 2;
-            bm = BitmapFactory.decodeFile(path, options);
-        }*/
-
-     /* while (bm.getWidth() > 1080) {
-            bm = sizecompress(bm);
-        }*/
          Log.e("yy", "压缩后图片的大小" + getBitmapSize(bitmap) + "M宽度为" + bitmap.getWidth() + "高度为" + bitmap.getHeight());
 
         return bitmap;
@@ -102,56 +99,11 @@ public class FileUtils {
 
             inSampleSize = Math.max(widthRadio, heightRadio);
         }
-        Log.e("yy", "inSampleSize=" + inSampleSize);
+
         return inSampleSize;
     }
 
 
-/*    public static Bitmap downloadImgByUrl(String urlStr, ImageView imageview) {
-        FileOutputStream fos = null;
-        InputStream is = null;
-        try {
-            URL url = new URL(urlStr);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            is = new BufferedInputStream(conn.getInputStream());
-            is.mark(is.available());
-
-            BitmapFactory.Options opts = new BitmapFactory.Options();
-            opts.inJustDecodeBounds = true;
-            Bitmap bitmap = BitmapFactory.decodeStream(is, null, opts);
-
-            //获取imageview想要显示的宽和高
-            Utils.ImageSize imageViewSize = Utils.getImageViewSize(imageview);
-            opts.inSampleSize = caculateInSampleSize(opts,
-                    imageViewSize.width, imageViewSize.height);
-
-            opts.inJustDecodeBounds = false;
-            is.reset();
-            bitmap = BitmapFactory.decodeStream(is, null, opts);
-
-            conn.disconnect();
-            imageview.setImageBitmap(bitmap);
-            return bitmap;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (is != null)
-                    is.close();
-            } catch (IOException e) {
-            }
-
-            try {
-                if (fos != null)
-                    fos.close();
-            } catch (IOException e) {
-            }
-        }
-
-        return null;
-
-    }*/
 public static void saveBitmap(Bitmap bitmap, String picName) {
 
     File f = new File("/storage/emulated/0/Pictures/", picName);
@@ -172,4 +124,32 @@ public static void saveBitmap(Bitmap bitmap, String picName) {
         e.printStackTrace();
     }
 }
+
+
+
+
+    /**
+     * 从网络获取图片后,保存至本地缓存
+     *
+     * @param url
+     * @param bitmap
+     */
+    public static void setBitmapToLocal(Context mContext, String url, Bitmap bitmap) {
+        try {
+
+            String fileName = MD5Encoder.encode(url);//把图片的url当做文件名,并进行MD5加密
+            File file = new File(mContext.getCacheDir(), fileName);
+
+            //通过得到文件的父文件,判断父文件是否存在
+            File parentFile = file.getParentFile();
+            if (!parentFile.exists()) {
+                parentFile.mkdirs();
+            }
+            //把图片保存至本地
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, new FileOutputStream(file));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
 }

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="5" by="lint 3.3.2">
+
+    <issue
+        id="OldTargetApi"
+        severity="Warning"
+        message="Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the android.os.Build.VERSION_CODES javadoc for details."
+        category="Correctness"
+        priority="6"
+        summary="Target SDK attribute is not targeting latest version"
+        explanation="When your application runs on a version of Android that is more recent than your `targetSdkVersion` specifies that it has been tested with, various compatibility modes kick in. This ensures that your application continues to work, but it may look out of place. For example, if the `targetSdkVersion` is less than 14, your app may get an option button in the UI.&#xA;&#xA;To fix this issue, set the `targetSdkVersion` to the highest available value. Then test your app to make sure everything works correctly. You may want to consult the compatibility notes to see what changes apply to each version you are adding support for: http://developer.android.com/reference/android/os/Build.VERSION_CODES.html as well as follow this guide:&#xA;https://developer.android.com/distribute/best-practices/develop/target-sdk.html"
+        url="https://developer.android.com/distribute/best-practices/develop/target-sdk.html"
+        urls="https://developer.android.com/distribute/best-practices/develop/target-sdk.html,http://developer.android.com/reference/android/os/Build.VERSION_CODES.html"
+        errorLine1="        targetSdkVersion 26"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="D:\MyWorkSpace\YanImageload\YanImageloadLib\build.gradle"
+            line="10"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        severity="Warning"
+        message="Unnecessary; SDK_INT is always >= 15"
+        category="Performance"
+        priority="6"
+        summary="Obsolete SDK_INT Version Check"
+        explanation="This check flags version checks that are not necessary, because the `minSdkVersion` (or surrounding known API level) is already at least as high as the version checked for.&#xA;&#xA;Similarly, it also looks for resources in `-vNN` folders, such as `values-v14` where the version qualifier is less than or equal to the `minSdkVersion`, where the contents should be merged into the best folder."
+        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {//API 12"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="D:\MyWorkSpace\YanImageload\YanImageloadLib\src\main\java\com\yanshao\yanimageload\util\FileUtils.java"
+            line="85"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="StaticFieldLeak"
+        severity="Warning"
+        message="Do not place Android context classes in static fields; this is a memory leak (and also breaks Instant Run)"
+        category="Performance"
+        priority="6"
+        summary="Static Field Leaks"
+        explanation="A static field will leak contexts.&#xA;&#xA;Non-static inner classes have an implicit reference to their outer class. If that outer class is for example a `Fragment` or `Activity`, then this reference means that the long-running handler/loader/task will hold a reference to the activity which prevents it from getting garbage collected.&#xA;&#xA;Similarly, direct field references to activities and fragments from these longer running instances can cause leaks.&#xA;&#xA;ViewModel classes should never point to Views or non-application Contexts."
+        errorLine1="    private static Context mContext;"
+        errorLine2="            ~~~~~~">
+        <location
+            file="D:\MyWorkSpace\YanImageload\YanImageloadLib\src\main\java\com\yanshao\yanimageload\imageload\YanImageLoad.java"
+            line="43"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="StaticFieldLeak"
+        severity="Warning"
+        message="Do not place Android context classes in static fields (static reference to `YanImageLoad` which has field `mContext` pointing to `Context`); this is a memory leak (and also breaks Instant Run)"
+        category="Performance"
+        priority="6"
+        summary="Static Field Leaks"
+        explanation="A static field will leak contexts.&#xA;&#xA;Non-static inner classes have an implicit reference to their outer class. If that outer class is for example a `Fragment` or `Activity`, then this reference means that the long-running handler/loader/task will hold a reference to the activity which prevents it from getting garbage collected.&#xA;&#xA;Similarly, direct field references to activities and fragments from these longer running instances can cause leaks.&#xA;&#xA;ViewModel classes should never point to Views or non-application Contexts."
+        errorLine1="    private static YanImageLoad instance;"
+        errorLine2="            ~~~~~~">
+        <location
+            file="D:\MyWorkSpace\YanImageload\YanImageloadLib\src\main\java\com\yanshao\yanimageload\imageload\YanImageLoad.java"
+            line="47"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HandlerLeak"
+        severity="Warning"
+        message="This Handler class should be static or leaks might occur (anonymous android.os.Handler)"
+        category="Performance"
+        priority="4"
+        summary="Handler reference leaks"
+        explanation="Since this Handler is declared as an inner class, it may prevent the outer class from being garbage collected. If the Handler is using a Looper or MessageQueue for a thread other than the main thread, then there is no issue. If the Handler is using the Looper or MessageQueue of the main thread, you need to fix your Handler declaration, as follows: Declare the Handler as a static class; In the outer class, instantiate a WeakReference to the outer class and pass this object to your Handler when you instantiate the Handler; Make all references to members of the outer class using the WeakReference object."
+        errorLine1="    Handler handler = new Handler() {"
+        errorLine2="                      ^">
+        <location
+            file="D:\MyWorkSpace\YanImageload\YanImageloadLib\src\main\java\com\yanshao\yanimageload\imageload\YanImageLoad.java"
+            line="65"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="UseSparseArrays"
+        severity="Warning"
+        message="Use `new SparseArray&lt;String>(...)` instead for better performance"
+        category="Performance"
+        priority="4"
+        summary="HashMap can be replaced with SparseArray"
+        explanation="For maps where the keys are of type integer, it&apos;s typically more efficient to use the Android `SparseArray` API. This check identifies scenarios where you might want to consider using `SparseArray` instead of `HashMap` for better performance.&#xA;&#xA;This is **particularly** useful when the value types are primitives like ints, where you can use `SparseIntArray` and avoid auto-boxing the values from `int` to `Integer`.&#xA;&#xA;If you need to construct a `HashMap` because you need to call an API outside of your control which requires a `Map`, you can suppress this warning using for example the `@SuppressLint` annotation."
+        errorLine1="            .synchronizedMap(new HashMap&lt;Integer, String>());"
+        errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="D:\MyWorkSpace\YanImageload\YanImageloadLib\src\main\java\com\yanshao\yanimageload\bean\CancelableRequestDelegate.java"
+            line="9"
+            column="30"/>
+    </issue>
+
+</issues>

@@ -1,191 +1,132 @@
 package com.yanshao.yanimageload.imageload;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Handler;
 import android.view.View;
 import android.widget.ImageView;
 
+import com.yanshao.yanimageload.bean.ImageBean;
 import com.yanshao.yanimageload.util.CircleImageDrawable;
+import com.yanshao.yanimageload.util.Dispatcher;
 import com.yanshao.yanimageload.util.FileUtils;
+import com.yanshao.yanimageload.util.LIFOLinkedBlockingDeque;
 import com.yanshao.yanimageload.util.RoundImageDrawable;
+import com.yanshao.yanimageload.util.Scheme;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
-public class NetCacheUtils {
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+/**
+ * 网络获取图片
+ * @author WANGYAN
+ * 微博：@Wang丶Yan
+ * Github:https://github.com/yanshao
+ * 创建时间：2019-03-22
+ */
+public class NetCacheUtils extends Dispatcher {
 
     private LocalCacheUtils mLocalCacheUtils;
     private MemoryCacheUtils mMemoryCacheUtils;
+    private ExecutorService mThreadPool;
+    private static final int DEAFULT_THREAD_COUNT = 3;
+    protected static final int MAX_REDIRECT_COUNT = 5;
 
-    public NetCacheUtils(LocalCacheUtils localCacheUtils, MemoryCacheUtils memoryCacheUtils) {
+    public NetCacheUtils(Context context, LocalCacheUtils localCacheUtils, MemoryCacheUtils memoryCacheUtils, BlockingQueue<ImageBean> queue, Handler handler) {
+        super(context, queue, handler, YanImageLoad.MSG_CACHE_HINT, YanImageLoad.MSG_CACHE_UN_HINT);
         mLocalCacheUtils = localCacheUtils;
         mMemoryCacheUtils = memoryCacheUtils;
+        mThreadPool = new ThreadPoolExecutor(DEAFULT_THREAD_COUNT, DEAFULT_THREAD_COUNT, 0, TimeUnit.MILLISECONDS, new LIFOLinkedBlockingDeque<Runnable>());
     }
 
-    public NetCacheUtils() {
-
+    @Override
+    protected void dealRequest(ImageBean request) {
+        mThreadPool.execute(buildTask(request));
     }
 
-    /**
-     * 从网络下载图片
-     *
-     * @param ivPic 显示图片的imageview
-     * @param url   下载图片的网络地址
-     */
-    public void getBitmapFromNet(ImageView ivPic, String url, int tag) {
+    private Runnable buildTask(final ImageBean request) {
+        return new Runnable() {
+            @Override
+            public void run() {
 
-        new BitmapTask().execute(ivPic, url, tag);//启动AsyncTask
+                switch (Scheme.ofUri(request.getUrl())) {
+                    case HTTP:
+                        Bitmap bitmap = downLoadBitmap(request);
+                        if (bitmap == null) {
+                            sendErrorMsg(request);
+                        } else {
+                            bitmap = FileUtils.compress(bitmap, request.getImageview());
+                            request.setBitmap(bitmap);
+                            YanImageLoad.setBitmapToMemory(request.getUrl(), bitmap);
+                            FileUtils.setBitmapToLocal(mContext,request.getUrl(), bitmap);
+                            sendSuccessMsg(request);
+                        }
+                        break;
+                    case PATH:
+                        Bitmap bitmap1 = getfileBitmap(request);
+                        if (bitmap1 == null) {
+                            sendErrorMsg(request);
+                        } else {
+                            bitmap1 = FileUtils.compress(bitmap1, request.getImageview());
+                            request.setBitmap(bitmap1);
+                            YanImageLoad.setBitmapToMemory(request.getUrl(), bitmap1);
+                            FileUtils.setBitmapToLocal(mContext,request.getUrl(), bitmap1);
+                            sendSuccessMsg(request);
+                        }
+                        break;
+                    default:
+                        sendErrorMsg(request);
 
-    }
-
-
-    public void getBitmapFromNet(View ivPic, String url) {
-
-        new BitmapTask_view().execute(ivPic, url);//启动AsyncTask
-
-    }
-
-    public Bitmap getBitmapFromNet(final String url) {
-        //启动AsyncTask
-        return null;
-    }
-
-    /**
-     * AsyncTask就是对handler和线程池的封装
-     * 第一个泛型:参数类型
-     * 第二个泛型:更新进度的泛型
-     * 第三个泛型:onPostExecute的返回结果
-     */
-    class BitmapTask extends AsyncTask<Object, Void, Bitmap> {
-
-        private ImageView ivPic;
-        private String url;
-        private int tag;
-
-        /**
-         * 后台耗时操作,存在于子线程中
-         *
-         * @param params
-         * @return
-         */
-        @Override
-        protected Bitmap doInBackground(Object[] params) {
-            ivPic = (ImageView) params[0];
-            url = (String) params[1];
-            tag = (int) params[2];
-            return downLoadBitmap(url);
-        }
-
-        /**
-         * 更新进度,在主线程中
-         *
-         * @param values
-         */
-        @Override
-        protected void onProgressUpdate(Void[] values) {
-            super.onProgressUpdate(values);
-        }
-
-        /**
-         * 耗时方法结束后执行该方法,主线程中
-         *
-         * @param result
-         */
-        @Override
-        protected void onPostExecute(Bitmap result) {
-            if (result != null) {
-               // ivPic.setImageDrawable(BitmapUtil.RoundImage(result, mcontext));
-                Bitmap bitmap=FileUtils.compress(result,ivPic);
-                if (tag == 1) {
-                    ivPic.setImageDrawable(new RoundImageDrawable(bitmap));
-                } else if (tag == 2) {
-                    ivPic.setImageDrawable(new CircleImageDrawable(bitmap));
-                } else{
-                    ivPic.setImageBitmap(bitmap);
                 }
-                //从网络获取图片后,保存至本地缓存
-                mLocalCacheUtils.setBitmapToLocal(url, bitmap);
-                //保存至内存中
-                mMemoryCacheUtils.setBitmapToMemory(url, bitmap);
 
             }
-        }
+        };
     }
 
-    /**
-     * AsyncTask就是对handler和线程池的封装
-     * 第一个泛型:参数类型
-     * 第二个泛型:更新进度的泛型
-     * 第三个泛型:onPostExecute的返回结果
-     */
-    class BitmapTask_view extends AsyncTask<Object, Void, Bitmap> {
 
-        private View ivPic;
-        private String url;
+    public Bitmap getfileBitmap(ImageBean request) {
+        File file = new File(request.getUrl());
+        Bitmap bitmap = null;
+        try {
+            bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
 
-        /**
-         * 后台耗时操作,存在于子线程中
-         *
-         * @param params
-         * @return
-         */
-        @Override
-        protected Bitmap doInBackground(Object[] params) {
-            ivPic = (View) params[0];
-            url = (String) params[1];
+            if (bitmap != null) {
 
-            return downLoadBitmap(url);
-        }
+                bitmap = FileUtils.compress(bitmap, request.getImageview());
 
-        /**
-         * 更新进度,在主线程中
-         *
-         * @param values
-         */
-        @Override
-        protected void onProgressUpdate(Void[] values) {
-            super.onProgressUpdate(values);
-        }
-
-        /**
-         * 耗时方法结束后执行该方法,主线程中
-         *
-         * @param result
-         */
-        @Override
-        protected void onPostExecute(Bitmap result) {
-            if (result != null) {
-                //ivPic.setImageBitmap(result);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                    //Android系统大于等于API16，使用setBackground
-                    ivPic.setBackground(new BitmapDrawable(result));
-                } else {
-                    //Android系统小于API16，使用setBackground
-                    ivPic.setBackgroundDrawable(new BitmapDrawable(result));
-                }
-                //从网络获取图片后,保存至本地缓存
-                mLocalCacheUtils.setBitmapToLocal(url, result);
-                //保存至内存中
-                mMemoryCacheUtils.setBitmapToMemory(url, result);
-
+                return bitmap;
             }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
+        return bitmap;
     }
+
 
     /**
      * 网络下载图片
      *
-     * @param url
      * @return
      */
-    public Bitmap downLoadBitmap(String url) {
+    public Bitmap downLoadBitmap(ImageBean imageBean) {
         HttpURLConnection conn = null;
         try {
-            conn = (HttpURLConnection) new URL(url).openConnection();
+            conn = (HttpURLConnection) new URL(imageBean.getUrl()).openConnection();
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
             conn.setRequestMethod("GET");
@@ -203,6 +144,7 @@ public class NetCacheUtils {
             }
         } catch (IOException e) {
             e.printStackTrace();
+
         } catch (Exception e) {
         } finally {
             if (conn != null) {
