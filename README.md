@@ -8,7 +8,7 @@
 二、依赖
 	
 	dependencies {
-	        implementation 'com.github.yanshao:YanImageload:v1.0'
+	       implementation 'com.github.yanshao:YanImageload:v2.2'
 	}
   
   
