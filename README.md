@@ -5,6 +5,8 @@
 
 ![Alt text](/img/效果图.png)
 
+
+上图中第二张事本地图片
 二、依赖
 	
 	dependencies {
