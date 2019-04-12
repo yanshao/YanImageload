@@ -30,10 +30,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void passPermissions() {
 //
-             //   FileUtils.compress("/storage/emulated/0/Pictures/IMG_20180526_224123.jpg",image);
-               YanImageLoad.getInstance(MainActivity.this).disPlay(image, "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1553058539054&di=0713321ef5ba49d6983b996061cda040&imgtype=0&src=http%3A%2F%2Fh.hiphotos.baidu.com%2Fzhidao%2Fpic%2Fitem%2Fac6eddc451da81cb167b12945466d016082431cd.jpg", 0);
-               YanImageLoad.getInstance(MainActivity.this).disPlay(image1, "/storage/emulated/0/Pictures/IMG_20180526_224123.jpg", 1);
-              YanImageLoad.getInstance(MainActivity.this).disPlay(image2, "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1553058539054&di=0713321ef5ba49d6983b996061cda040&imgtype=0&src=http%3A%2F%2Fh.hiphotos.baidu.com%2Fzhidao%2Fpic%2Fitem%2Fac6eddc451da81cb167b12945466d016082431cd.jpg", 2);
+                //   FileUtils.compress("/storage/emulated/0/Pictures/IMG_20180526_224123.jpg",image);
+                YanImageLoad.getInstance(MainActivity.this).disPlay(image, "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1553058539054&di=0713321ef5ba49d6983b996061cda040&imgtype=0&src=http%3A%2F%2Fh.hiphotos.baidu.com%2Fzhidao%2Fpic%2Fitem%2Fac6eddc451da81cb167b12945466d016082431cd.jpg", R.mipmap.ic_launcher, 0);
+                YanImageLoad.getInstance(MainActivity.this).disPlay(image1, "/storage/emulated/0/Pictures/IMG_20180526_224123.jpg", R.mipmap.ic_launcher, 1);
+                YanImageLoad.getInstance(MainActivity.this).disPlay(image2, R.mipmap.ic_launcher, 2);
             }
 
             @Override

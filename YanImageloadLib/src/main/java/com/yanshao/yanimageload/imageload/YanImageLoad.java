@@ -3,6 +3,7 @@ package com.yanshao.yanimageload.imageload;
 import android.content.Context;
 import android.graphics.Bitmap;
 
+import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -13,8 +14,10 @@ import android.widget.ImageView;
 import com.yanshao.yanimageload.bean.CancelableRequestDelegate;
 import com.yanshao.yanimageload.bean.ImageBean;
 
+import com.yanshao.yanimageload.util.CircleImageDrawable;
 import com.yanshao.yanimageload.util.LIFOLinkedBlockingDeque;
 import com.yanshao.yanimageload.util.LogUtils;
+import com.yanshao.yanimageload.util.RoundImageDrawable;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -129,7 +132,7 @@ public class YanImageLoad {
         public YanImageLoad build() {
             Context context = this.context;
 
-
+            mContext=context;
             return new YanImageLoad(context);
         }
     }
@@ -146,19 +149,31 @@ public class YanImageLoad {
     }
 
     /**
-     * @param ivPic imageview
-     * @param url   图片url
-     * @param tag   1 圆角矩形 2 圆形  other  正常
+     *
+     * @param ivPic  imageview
+     * @param url  图片url 或者路径
+     * @param errresid 加载失败时显示的资源文件
+     * @param tag  1  圆角  2  圆形  other  正常
      */
-    public void disPlay(final ImageView ivPic, final String url, final int tag) {
+    public void disPlay(final ImageView ivPic, final String url, int errresid,final int tag) {
 
-        ImageBean imageBean = new ImageBean(this, url, ivPic, 0, tag);
+        ImageBean imageBean = new ImageBean(this, url, ivPic, errresid, tag);
         mCancelableRequestDelegate.putRequest(ivPic.hashCode(), imageBean.getCacheKey());
 
         priorityThreadPool.execute(new buildTask(imageBean));
     }
 
+    public void disPlay(final ImageView ivPic, int resid, final int tag) {
+        Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), resid, null);
+        if (tag == 1) {
+            ivPic.setImageDrawable(new RoundImageDrawable(bitmap));
+        } else if (tag == 2) {
+            ivPic.setImageDrawable(new CircleImageDrawable(bitmap));
+        } else {
+            ivPic.setImageBitmap(bitmap);
+        }
 
+    }
 
 
     private class buildTask implements Runnable {
