@@ -5,10 +5,14 @@
 
 ![Alt text](/img/效果图.png)
 
+
+上图中第二张为本地图片
+
+
 二、依赖
 	
 	dependencies {
-	        implementation 'com.github.yanshao:YanImageload:v1.0'
+	       implementation 'com.github.yanshao:YanImageload:v2.2'
 	}
   
   
