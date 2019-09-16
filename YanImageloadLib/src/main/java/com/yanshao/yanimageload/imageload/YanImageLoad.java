@@ -27,6 +27,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * 加载图片  目前仅支持 加载sd卡图片  和网络图片
+ *
  * @author WANGYAN
  * 微博：@Wang丶Yan
  * Github:https://github.com/yanshao
@@ -49,11 +50,12 @@ public class YanImageLoad {
     public static final int MSG_HTTP_GET_SUCCESS = MSG_HTTP_GET_ERROR + 1;//网络 失败 code
     public static final int MSG_LOCAL_GET_SUCCESS = MSG_HTTP_GET_SUCCESS + 1;//本地（磁盘）成功 code
     public static final int MSG_LOCAL_GET_ERROR = MSG_LOCAL_GET_SUCCESS + 1;//本地（磁盘）失败 code
-    public   static LruCache<String, Bitmap> mMemoryCache;
+    public static LruCache<String, Bitmap> mMemoryCache;
 
     public CancelableRequestDelegate getCancelableRequestDelegate() {
         return mCancelableRequestDelegate;
     }
+
     private Handler handler = new YanHandler();
 
 
@@ -65,43 +67,45 @@ public class YanImageLoad {
 
             switch (msg.what) {
                 case MSG_CACHE_UN_HINT:
-                    LogUtils.e("yy","=内存加载失败=");
+                    LogUtils.e("yy", "=内存加载失败=");
                     mLocalQueue.add(imageBean);
 
                     break;
                 case MSG_LOCAL_GET_ERROR:
-                    LogUtils.e("yy","=本地加载失败=");
+                    LogUtils.e("yy", "=本地加载失败=");
+                    Log.e("yy", "leixing==" + Scheme.ofUri(imageBean.getUrl()));
+                    Log.e("yy", "URL==" + imageBean.getUrl());
                     switch (Scheme.ofUri(imageBean.getUrl())) {
-                        case FILE:
-                            imageBean.setErrorImageRes();
-                            break;
+
                         case HTTP:
                             mNetworkQueue.add(imageBean);
+                            break;
+                        default:
+                            imageBean.setErrorImageRes();
                             break;
                     }
 
 
                     break;
                 case MSG_HTTP_GET_ERROR:
-                    LogUtils.e("yy","=网络或者文件加载失败=");
+                    LogUtils.e("yy", "=网络或者文件加载失败=");
                     imageBean.setErrorImageRes();
                     break;
                 case MSG_CACHE_HINT:
-                    LogUtils.e("yy","=内存加载成功=");
+                    LogUtils.e("yy", "=内存加载成功=");
                     imageBean.setResBitmap();
                     break;
                 case MSG_LOCAL_GET_SUCCESS:
-                    LogUtils.e("yy","=本地加载成功=");
+                    LogUtils.e("yy", "=本地加载成功=");
                     imageBean.setResBitmap();
                     break;
                 case MSG_HTTP_GET_SUCCESS:
-                    LogUtils.e("yy","=网络或者文件加载成功=");
+                    LogUtils.e("yy", "=网络或者文件加载成功=");
                     imageBean.setResBitmap();
                     break;
             }
         }
     }
-
 
 
     private YanImageLoad(Context context) {
@@ -145,10 +149,11 @@ public class YanImageLoad {
         public YanImageLoad build() {
             Context context = this.context;
 
-            mContext=context;
+            mContext = context;
             return new YanImageLoad(context);
         }
     }
+
     public static YanImageLoad getInstance(Context context) {
 
         if (instance == null) {
@@ -162,13 +167,12 @@ public class YanImageLoad {
     }
 
     /**
-     *
-     * @param ivPic  imageview
-     * @param url  图片url 或者路径
+     * @param ivPic    imageview
+     * @param url      图片url 或者路径
      * @param errresid 加载失败时显示的资源文件
-     * @param tag  1  圆角  2  圆形  other  正常
+     * @param tag      1  圆角  2  圆形  other  正常
      */
-    public void disPlay(final ImageView ivPic, final String url, int errresid,final int tag) {
+    public void disPlay(final ImageView ivPic, final String url, int errresid, final int tag) {
 
         ImageBean imageBean = new ImageBean(this, url, ivPic, errresid, tag);
         mCancelableRequestDelegate.putRequest(ivPic.hashCode(), imageBean.getCacheKey());
