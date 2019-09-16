@@ -6,7 +6,7 @@ import android.util.Patterns;
 import java.util.Locale;
 
 public enum Scheme {
-    HTTP("http"), FILE("file"),PATH("path"),  CONTENT("content"), ASSETS("assets"), DRAWABLE("drawable"), UNKNOWN("");
+    HTTP("http"), FILE("file"), PATH("path"), CONTENT("content"), ASSETS("assets"), DRAWABLE("drawable"), UNKNOWN("");
 
     private String scheme;
     private String uriPrefix;
@@ -29,26 +29,32 @@ public enum Scheme {
         Scheme str = UNKNOWN;
         if (Patterns.WEB_URL.matcher(uri).matches()) {
             str = HTTP;
+            return str;
         }
         if (uri.substring(0, 4).equals(FILE.scheme)) {
 
             str = FILE;
+            return str;
         }
         if (uri.substring(0, 7).equals(CONTENT.scheme)) {
 
             str = CONTENT;
+            return str;
         }
         if (uri.substring(0, 6).equals(ASSETS.scheme)) {
 
             str = ASSETS;
+            return str;
         }
         if (uri.substring(0, 8).equals(DRAWABLE.scheme)) {
 
             str = DRAWABLE;
+            return str;
         }
-        if (uri.substring(0, 1).equals("/")&&(uri.substring(uri.length()-4, uri.length()).equals(".jpg")||uri.substring(uri.length()-4, uri.length()).equals(".png"))) {
+        if (uri.substring(0, 1).equals("/") && (uri.substring(uri.length() - 4, uri.length()).equals(".jpg") || uri.substring(uri.length() - 4, uri.length()).equals(".png"))) {
 
             str = PATH;
+            return str;
         }
         return str;
     }

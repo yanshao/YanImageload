@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -80,6 +81,7 @@ public class NetCacheUtils extends Dispatcher {
                     case PATH:
                         Bitmap bitmap1 = getfileBitmap(request);
                         if (bitmap1 == null) {
+                            Log.e("yy","bitmap1"+bitmap1);
                             sendErrorMsg(request);
                         } else {
                             bitmap1 = FileUtils.compress(bitmap1, request.getImageview());
@@ -104,14 +106,15 @@ public class NetCacheUtils extends Dispatcher {
         Bitmap bitmap = null;
         try {
             bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
-
+            Log.e("yy","bitmapE111W");
             if (bitmap != null) {
-
+                Log.e("yy","bitmap"+bitmap);
                 bitmap = FileUtils.compress(bitmap, request.getImageview());
 
                 return bitmap;
             }
         } catch (FileNotFoundException e) {
+            Log.e("yy","bitmapEW");
             e.printStackTrace();
         }
         return bitmap;

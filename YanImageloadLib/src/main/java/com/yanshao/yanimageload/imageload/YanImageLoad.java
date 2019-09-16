@@ -18,6 +18,7 @@ import com.yanshao.yanimageload.util.CircleImageDrawable;
 import com.yanshao.yanimageload.util.LIFOLinkedBlockingDeque;
 import com.yanshao.yanimageload.util.LogUtils;
 import com.yanshao.yanimageload.util.RoundImageDrawable;
+import com.yanshao.yanimageload.util.Scheme;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -53,12 +54,13 @@ public class YanImageLoad {
     public CancelableRequestDelegate getCancelableRequestDelegate() {
         return mCancelableRequestDelegate;
     }
+    private Handler handler = new YanHandler();
 
-    Handler handler = new Handler() {
+
+    private class YanHandler extends Handler {
+
         @Override
         public void handleMessage(Message msg) {
-
-
             ImageBean imageBean = (ImageBean) msg.obj;
 
             switch (msg.what) {
@@ -69,7 +71,16 @@ public class YanImageLoad {
                     break;
                 case MSG_LOCAL_GET_ERROR:
                     LogUtils.e("yy","=本地加载失败=");
-                    mNetworkQueue.add(imageBean);
+                    switch (Scheme.ofUri(imageBean.getUrl())) {
+                        case FILE:
+                            imageBean.setErrorImageRes();
+                            break;
+                        case HTTP:
+                            mNetworkQueue.add(imageBean);
+                            break;
+                    }
+
+
                     break;
                 case MSG_HTTP_GET_ERROR:
                     LogUtils.e("yy","=网络或者文件加载失败=");
@@ -88,9 +99,10 @@ public class YanImageLoad {
                     imageBean.setResBitmap();
                     break;
             }
-            //imageBean.getImageView().setImageBitmap(imageBean.getBitmap());
         }
-    };
+    }
+
+
 
     private YanImageLoad(Context context) {
         long maxMemory = Runtime.getRuntime().maxMemory() / 8;//得到手机最大允许内存的1/8,即超过指定内存,则开始回收
@@ -113,9 +125,10 @@ public class YanImageLoad {
         mNetworkQueue = new LinkedBlockingQueue<ImageBean>();
         mNetCacheUtils = new NetCacheUtils(context, mLocalCacheUtils, mMemoryCacheUtils, mNetworkQueue, handler);
 
-        mMemoryCacheUtils.start();
+
         mLocalCacheUtils.start();
         mNetCacheUtils.start();
+        mMemoryCacheUtils.start();
 
     }
 
