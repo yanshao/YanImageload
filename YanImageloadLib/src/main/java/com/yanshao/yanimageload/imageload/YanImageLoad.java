@@ -46,8 +46,8 @@ public class YanImageLoad {
     BlockingQueue<ImageBean> mNetworkQueue;
     public static final int MSG_CACHE_HINT = 0x110;//内存 成功 code
     public static final int MSG_CACHE_UN_HINT = MSG_CACHE_HINT + 1;//内存 失败 code
-    public static final int MSG_HTTP_GET_ERROR = MSG_CACHE_UN_HINT + 1;//网络 成功 code
-    public static final int MSG_HTTP_GET_SUCCESS = MSG_HTTP_GET_ERROR + 1;//网络 失败 code
+    public static final int MSG_HTTP_GET_ERROR = MSG_CACHE_UN_HINT + 1;//网络 失败 code
+    public static final int MSG_HTTP_GET_SUCCESS = MSG_HTTP_GET_ERROR + 1;//网络 成功 code
     public static final int MSG_LOCAL_GET_SUCCESS = MSG_HTTP_GET_SUCCESS + 1;//本地（磁盘）成功 code
     public static final int MSG_LOCAL_GET_ERROR = MSG_LOCAL_GET_SUCCESS + 1;//本地（磁盘）失败 code
     public static LruCache<String, Bitmap> mMemoryCache;
@@ -75,15 +75,8 @@ public class YanImageLoad {
                     LogUtils.e("yy", "=本地加载失败=");
                     Log.e("yy", "leixing==" + Scheme.ofUri(imageBean.getUrl()));
                     Log.e("yy", "URL==" + imageBean.getUrl());
-                    switch (Scheme.ofUri(imageBean.getUrl())) {
 
-                        case HTTP:
-                            mNetworkQueue.add(imageBean);
-                            break;
-                        default:
-                            imageBean.setErrorImageRes();
-                            break;
-                    }
+                    mNetworkQueue.add(imageBean);
 
 
                     break;

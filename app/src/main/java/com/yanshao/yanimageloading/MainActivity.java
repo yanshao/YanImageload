@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
                 //   FileUtils.compress("/storage/emulated/0/Pictures/IMG_20180526_224123.jpg",image);
                 YanImageLoad.getInstance(MainActivity.this).disPlay(image, "https://github.com/yanshao/YanImageload/raw/master/img/%E6%95%88%E6%9E%9C%E5%9B%BE.png", R.mipmap.ic_launcher, 0);
                 YanImageLoad.getInstance(MainActivity.this).disPlay(image1, "/storage/emulated/0/DCIM/Camera/微信截图_20190910155339.png", R.mipmap.ic_launcher, 1);
-                YanImageLoad.getInstance(MainActivity.this).disPlay(image2, R.mipmap.ic_launcher, 2);
+               // YanImageLoad.getInstance(MainActivity.this).disPlay(image2, R.mipmap.ic_launcher, 2);
             }
 
             @Override

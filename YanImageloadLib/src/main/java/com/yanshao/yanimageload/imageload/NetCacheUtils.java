@@ -49,7 +49,7 @@ public class NetCacheUtils extends Dispatcher {
     protected static final int MAX_REDIRECT_COUNT = 5;
 
     public NetCacheUtils(Context context, LocalCacheUtils localCacheUtils, MemoryCacheUtils memoryCacheUtils, BlockingQueue<ImageBean> queue, Handler handler) {
-        super(context, queue, handler, YanImageLoad.MSG_CACHE_HINT, YanImageLoad.MSG_CACHE_UN_HINT);
+        super(context, queue, handler, YanImageLoad.MSG_HTTP_GET_SUCCESS, YanImageLoad.MSG_HTTP_GET_ERROR);
         mLocalCacheUtils = localCacheUtils;
         mMemoryCacheUtils = memoryCacheUtils;
         mThreadPool = new ThreadPoolExecutor(DEAFULT_THREAD_COUNT, DEAFULT_THREAD_COUNT, 0, TimeUnit.MILLISECONDS, new LIFOLinkedBlockingDeque<Runnable>());
@@ -111,7 +111,7 @@ public class NetCacheUtils extends Dispatcher {
                 Log.e("yy","bitmap"+bitmap);
                 bitmap = FileUtils.compress(bitmap, request.getImageview());
 
-                return bitmap;
+
             }
         } catch (FileNotFoundException e) {
             Log.e("yy","bitmapEW");
