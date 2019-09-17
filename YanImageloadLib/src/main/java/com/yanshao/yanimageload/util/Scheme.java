@@ -46,7 +46,7 @@ public enum Scheme {
 
             str = DRAWABLE;
         }
-        if (uri.substring(0, 1).equals("/")&&(uri.substring(uri.length()-4, uri.length()).equals(".jpg")||uri.substring(uri.length()-4, uri.length()).equals(".png"))) {
+        if (uri.substring(0, 1).equals("/")&&(uri.substring(uri.length()-4, uri.length()).equals(".jpg")||uri.substring(uri.length()-4, uri.length()).equals(".png")||uri.substring(uri.length()-5, uri.length()).equals(".jpeg"))) {
 
             str = PATH;
         }
